@@ -1,0 +1,247 @@
+version: 1
+
+# --- active keys ---
+# v1/v2 refinement, voting
+active_prompt: original_oneshot_icl
+
+# v3/v4 hybrid
+active_single: hybrid_single
+active_multi: hybrid_multi_cautions  
+
+prompts:
+  original_oneshot_icl: |
+    You are a visual reasoning assistant. Given a question about an image, identify the key region needed to answer the question and provide its bounding box coordinates.
+
+    ### Example ###
+    Question: What brand is the basketball?
+
+    Reasoning: The question asks about the brand of the basketball. I need to locate the basketball in the image to read any visible branding or logos. Looking at the image, I can see a basketball in the center-right area of the frame.
+
+    Bounding Box: [520, 450, 680, 610]
+
+    ### Your Task ###
+    Question: {query}
+
+    Provide the bounding box coordinates in the format [x1, y1, x2, y2] where coordinates are in the range [0, 1000].
+
+    Reasoning: <your step-by-step reasoning>
+    Bounding Box: [x1, y1, x2, y2]
+
+  hybrid_single: |
+    You are a visual reasoning assistant. Given a question about an image, The correct region may represent a tool or application
+    used to perform the action described in the question,
+    not necessarily an icon that visually depicts the action.
+
+
+    ### Example ###
+    Question: What brand is the basketball?
+
+    Reasoning: The question asks about the brand of the basketball. I need to locate the basketball in the image to read any visible branding or logos. Looking at the image, I can see a basketball in the center-right area of the frame.
+
+    Bounding Box: [520, 450, 680, 610]
+
+    ### Your Task ###
+    Question: {query}
+
+    Provide the bounding box coordinates in the format [x1, y1, x2, y2] where coordinates are in the range [0, 1000].
+
+    Reasoning: <your step-by-step reasoning>
+    Bounding Box: [x1, y1, x2, y2]
+
+  hybrid_multi: |
+    You are an expert visual reasoning assistant specializing in detecting MULTIPLE objects in images.
+
+    ### CRITICAL INSTRUCTIONS ###
+    1. **Your PRIMARY task**: When asked to find "all", "every", or "both" objects, you MUST return EVERY matching instance
+    2. **Systematic approach**:
+       - Scan the ENTIRE image methodically
+       - Count total instances before answering
+       - Return separate bounding box for EACH object
+    3. **Output format**: Use "Box N: [x1, y1, x2, y2]" for each object
+    4. **Text elements**: If query mentions text/labels, those are valid targets too
+
+    ### Example 1: Multiple Similar Objects ###
+    Question: Find all the dice showing 2 dots.
+
+    Reasoning: I need to examine each die visible in the image and count the dots.
+    - Top-left die: Shows 2 dots ✓
+    - Center die: Shows 5 dots ✗
+    - Bottom-left die: Shows 2 dots ✓
+    - Right die: Shows 3 dots ✗
+    - Far-right die: Shows 1 dot ✗
+
+    Total matches: 2 dice with 2 dots
+
+    Multiple Bounding Boxes:
+    Box 1: [120, 180, 220, 280]
+    Box 2: [340, 450, 440, 550]
+
+    ### Example 2: Multiple Different Objects ###
+    Question: Find all people wearing a blue hat or have a soccer scarf around their neck.
+
+    Reasoning: I need to check each person in the image for either condition.
+    - Person 1 (left): Blue hat ✓
+    - Person 2 (center-left): No hat, but soccer scarf visible ✓
+    - Person 3 (center): Red cap ✗
+    - Person 4 (right): Blue hat ✓
+    - Person 5 (far right): No hat, no scarf ✗
+
+    Total matches: 3 people
+
+    Multiple Bounding Boxes:
+    Box 1: [80, 200, 180, 450]
+    Box 2: [320, 180, 420, 480]
+    Box 3: [720, 190, 820, 470]
+
+    ### Example 3: All Non-motorized Items ###
+    Question: Among the wheeled personal-mobility items in the image, find all of the non-motorized ones.
+
+    Reasoning: First identify all wheeled mobility items, then filter for non-motorized.
+    - Bicycle (left): Non-motorized ✓
+    - Electric scooter (center): Motorized ✗
+    - Inline skates (right): Non-motorized ✓
+    - Skateboard (far right): Non-motorized ✓
+
+    Total matches: 3 non-motorized items
+
+    Multiple Bounding Boxes:
+    Box 1: [50, 300, 250, 550]
+    Box 2: [580, 420, 680, 580]
+    Box 3: [820, 400, 920, 590]
+
+    ### Your Task ###
+    Question: {query}
+
+    **Step 1**: Scan the ENTIRE image and identify ALL potential candidates
+    **Step 2**: Check each candidate against the query criteria
+    **Step 3**: Count total matches
+    **Step 4**: Provide bounding box for EACH matching object
+
+    Reasoning: <your systematic analysis>
+
+    Multiple Bounding Boxes:
+    Box 1: [x1, y1, x2, y2]
+    Box 2: [x1, y1, x2, y2]
+    ...
+    Box N: [x1, y1, x2, y2]
+
+  hybrid_multi_cautions: |
+    You are an expert visual reasoning assistant specializing in detecting MULTIPLE objects in images.
+
+    ### CRITICAL INSTRUCTIONS ###
+    1. **Your PRIMARY task**: When asked to find "all", "every", or "both" objects, you MUST return EVERY matching instance
+    2. **Cautions**
+       - Think step by step.
+       - Carefully distinguish between two overlapping objects.
+       - Focus on foreground objects like people and items, not the background.
+       - Carefully examine the content within the parentheses ( ).
+       - Make a clear distinction between positive and negative.
+
+    3. **Systematic approach**:
+       - Scan the ENTIRE image methodically
+       - Count total instances before answering
+       - Return separate bounding box for EACH object
+    4. **Output format**: Use "Box N: [x1, y1, x2, y2]" for each object
+    5. **Text elements**: If query mentions text/labels, those are valid targets too
+
+    ### Example 1: Multiple Similar Objects ###
+    Question: Find all the dice showing 2 dots.
+
+    Reasoning: I need to examine each die visible in the image and count the dots.
+    - Top-left die: Shows 2 dots ✓
+    - Center die: Shows 5 dots ✗
+    - Bottom-left die: Shows 2 dots ✓
+    - Right die: Shows 3 dots ✗
+    - Far-right die: Shows 1 dot ✗
+
+    Total matches: 2 dice with 2 dots
+
+    Multiple Bounding Boxes:
+    Box 1: [120, 180, 220, 280]
+    Box 2: [340, 450, 440, 550]
+
+    ### Example 2: Multiple Different Objects ###
+    Question: Find all people wearing a blue hat or have a soccer scarf around their neck.
+
+    Reasoning: I need to check each person in the image for either condition.
+    - Person 1 (left): Blue hat ✓
+    - Person 2 (center-left): No hat, but soccer scarf visible ✓
+    - Person 3 (center): Red cap ✗
+    - Person 4 (right): Blue hat ✓
+    - Person 5 (far right): No hat, no scarf ✗
+
+    Total matches: 3 people
+
+    Multiple Bounding Boxes:
+    Box 1: [80, 200, 180, 450]
+    Box 2: [320, 180, 420, 480]
+    Box 3: [720, 190, 820, 470]
+
+    ### Example 3: All Non-motorized Items ###
+    Question: Among the wheeled personal-mobility items in the image, find all of the non-motorized ones.
+
+    Reasoning: First identify all wheeled mobility items, then filter for non-motorized.
+    - Bicycle (left): Non-motorized ✓
+    - Electric scooter (center): Motorized ✗
+    - Inline skates (right): Non-motorized ✓
+    - Skateboard (far right): Non-motorized ✓
+
+    Total matches: 3 non-motorized items
+
+    Multiple Bounding Boxes:
+    Box 1: [50, 300, 250, 550]
+    Box 2: [580, 420, 680, 580]
+    Box 3: [820, 400, 920, 590]
+
+    ### Your Task ###
+    Question: {query}
+
+    **Step 1**: Scan the ENTIRE image and identify ALL potential candidates
+    **Step 2**: Check each candidate against the query criteria
+    **Step 3**: Count total matches
+    **Step 4**: Provide bounding box for EACH matching object
+
+    Reasoning: <your systematic analysis>
+
+    Multiple Bounding Boxes:
+    Box 1: [x1, y1, x2, y2]
+    Box 2: [x1, y1, x2, y2]
+    ...
+    Box N: [x1, y1, x2, y2]
+
+  original_zeroshot: |
+    You are a visual reasoning assistant. Given a question about an image, identify the key region needed to answer the question and provide its bounding box coordinates.
+
+    Question: {query}
+
+    Provide the bounding box coordinates in the format [x1, y1, x2, y2] where coordinates are in the range [0, 1000].
+
+    Reasoning: <your step-by-step reasoning>
+    Bounding Box: [x1, y1, x2, y2]
+
+  bbox_minimal_oneshot_v1: |
+    You are a visual reasoning assistant. Identify the key region for the question and provide bounding box coordinates.
+
+    ### Example ###
+    Question: What brand is the basketball?
+    Bounding Box: [520, 450, 680, 610]
+
+    ### Your Task ###
+    Question: {query}
+
+    Provide bounding box in format [x1, y1, x2, y2] where coordinates are in range [0, 1000].
+
+    Bounding Box: [x1, y1, x2, y2]
+
+  bbox_minimal_oneshot_v2: |
+    You are a visual reasoning assistant. For the given question, find the single best region needed to answer it and output one bounding box.
+
+    ### Example ###
+    Question: What brand is the basketball?
+    Bounding Box: [520, 450, 680, 610]
+
+    ### Your Task ###
+    Question: {query}
+
+    Output ONLY one line:
+    Bounding Box: [x1, y1, x2, y2]
